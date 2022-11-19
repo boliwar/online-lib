@@ -1,10 +1,12 @@
 import requests
+import requests.exceptions
 from bs4 import BeautifulSoup
 import urllib.parse
 import os
 from dotenv import load_dotenv
 from pathlib import Path
 import re
+
 
 
 def get_team_books(url, count):
@@ -29,12 +31,20 @@ def save_books(books_team_url, books_count, directory_books, download_url):
     for book in team_books:
         book_id = pattern.findall(book['index'])[0]
         payload = {"id": book_id}
-        save_book_text(download_url, payload, directory_books, f'book_{book_id}.txt')
+        try:
+            save_book_text(download_url, payload, directory_books, f'book_{book_id}.txt')
+        except requests.exceptions.TooManyRedirects:
+            continue
 
+
+def check_for_redirect(response):
+    if not response.history:
+        raise requests.exceptions.TooManyRedirects
 
 def save_book_text(url, payload ,directory_books, file_name):
     response = requests.get(url, params=payload)
     response.raise_for_status()
+    check_for_redirect(response)
 
     directory_book = Path(os.getcwd(),directory_books)
     directory_book.mkdir(parents=True, exist_ok=True)
