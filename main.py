@@ -1,12 +1,52 @@
 import requests
 import requests.exceptions
 from bs4 import BeautifulSoup
-import urllib.parse
+from pathvalidate import sanitize_filename
 import os
 from dotenv import load_dotenv
 from pathlib import Path
 import re
 
+
+def get_text_url(url='http://tululu.org/b32168/', find_txt='скачать txt'):
+    response = requests.get(url)
+    response.raise_for_status()
+    bs_result = BeautifulSoup(response.text, "html.parser")
+    download_panel = bs_result.body.findAll('a',)
+
+    path_url = ''
+    for teg in download_panel:
+        if teg.text == find_txt:
+            path_url = teg.get("href")
+            break
+
+    if path_url:
+        url_components = urllib.parse.urlparse(url)
+        return urllib.parse.urlunparse([url_components.scheme,url_components.netloc,path_url,'','',''])
+
+def  create_team_books(firs_id=1, last_id=10):
+    team_books = []
+    for i in range(firs_id, last_id + 1):
+        try:
+            team_books.append(get_struct_book_by_id(i))
+        except requests.exceptions.TooManyRedirects:
+            pass
+    return team_books
+
+def get_struct_book_by_id(id):
+    response = requests.get("".join(['http://tululu.org/b',str(id)]))
+    response.raise_for_status()
+    check_for_redirect(response)
+    bs_result = BeautifulSoup(response.text, "html.parser")
+    books_result = bs_result.body.find('div', attrs={'id': 'content'})
+    bs_result = BeautifulSoup('<html>'+str(books_result)+'</html>', "html.parser")
+    img_struct = bs_result.find('img')
+    title_str = bs_result.find('h1')
+
+    return {'index': str(id),
+            'title': f"{id}. {title_str.text.split('::')[0].strip()}",
+            'img': img_struct.get("src"),
+            }
 
 
 def get_team_books(url, count):
@@ -19,38 +59,43 @@ def get_team_books(url, count):
     for book_struct in books_result:
         struct = BeautifulSoup('<html>'+str(book_struct)+'</html>', "html.parser")
         book_params = struct.find('a')
-        team_books.append({'index':book_params.get("href"), 'title': book_params.get("title")})
+        img_struct = BeautifulSoup('<html>'+str(book_params)+'</html>', "html.parser")
+        img_params = img_struct.find('img')
+        team_books.append({'index':book_params.get("href"),
+                           'title': book_params.get("title"),
+                           'img': img_params.get("src"),
+                           })
         i =+ 1
         if i >= count: break
-
     return team_books
 
-def save_books(books_team_url, books_count, directory_books, download_url):
+def save_book(book, directory_books, download_url):
     pattern = re.compile(r'\d+')
-    team_books = get_team_books(books_team_url, books_count)
-    for book in team_books:
-        book_id = pattern.findall(book['index'])[0]
-        payload = {"id": book_id}
-        try:
-            save_book_text(download_url, payload, directory_books, f'book_{book_id}.txt')
-        except requests.exceptions.TooManyRedirects:
-            continue
+    book_id = pattern.findall(book['index'])[0]
+    payload = {"id": book_id}
+    file_name = sanitize_filename(book['title'])
+    try:
+        return download_txt(f'{file_name}.txt', download_url, payload, directory_books)
+    except requests.exceptions.TooManyRedirects:
+        pass
 
 
 def check_for_redirect(response):
-    if not response.history:
+    if response.history and response.url=='https://tululu.org/':
         raise requests.exceptions.TooManyRedirects
 
-def save_book_text(url, payload ,directory_books, file_name):
+def download_txt(file_name, url, payload=None ,directory_books='books/'):
     response = requests.get(url, params=payload)
     response.raise_for_status()
     check_for_redirect(response)
 
     directory_book = Path(os.getcwd(),directory_books)
     directory_book.mkdir(parents=True, exist_ok=True)
-    print(Path(directory_book, file_name))
+
     with open(Path(directory_book, file_name), 'wb') as file:
         file.write(response.content)
+
+    return Path(directory_book, file_name)
 
 
 def main():
@@ -59,7 +104,10 @@ def main():
     books_count = int(os.environ['BOOKS_COUNT'])
     books_team_url = os.environ['BOOKS_TEAM_URL']
     download_url = os.environ['DOWNLOAD_URL']
-    save_books(books_team_url, books_count, directory_books, download_url)
+    # team_books = get_team_books(books_team_url, books_count)
+    team_books = create_team_books()
+    for book in team_books:
+        print(save_book(book, directory_books, download_url))
 
 if __name__ == "__main__":
     main()
