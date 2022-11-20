@@ -137,7 +137,9 @@ def main():
     books_team = create_books_team(site_url, start_id, end_id)
     for book in books_team:
         save_book(book, directory_books, directory_images)
-        print(book)
+        print(f"Название: {book['title']}")
+        print(f"Автор: {book['author']}")
+        print()
 
 
 if __name__ == "__main__":
