@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 from urllib.parse import urljoin, urlparse, urlunparse
 import argparse
+import time
 
 
 class WrongUrl(Exception):
@@ -122,6 +123,7 @@ def main():
     books_directory = os.environ['BOOKS_DIRECTORY']
     images_directory = os.environ['IMAGES_DIRECTORY']
     site_url = os.environ['SITE_URL']
+    timeout = 10
 
     books_team = []
     for current_id in range(start_id, end_id + 1):
@@ -130,13 +132,22 @@ def main():
         except requests.exceptions.TooManyRedirects:
             pass
         except WrongUrl:
-            pass
+            print(f'WrongUrl. ИД = {current_id}, нет ссылки для скачивания.')
+        except requests.exceptions.ConnectionError:
+            print(f'ConnectionError. Таймаут: {timeout}сек.')
+            time.sleep(timeout)
 
     for book in books_team:
-        save_book(book, books_directory, images_directory)
-        print(f"Название: {book['title']}")
-        print(f"Автор: {book['author']}")
-        print()
+        try:
+            save_book(book, books_directory, images_directory)
+            print(f"Название: {book['title']}")
+            print(f"Автор: {book['author']}")
+            print()
+        except requests.exceptions.ConnectionError:
+            print(f'ConnectionError. Таймаут: {timeout}сек.')
+            time.sleep(timeout)
+        except requests.exceptions.HTTPError:
+            print(f'HTTPError. Проверьте урлы: текст = {book["url"]}, картинка = {book["img"]}.')
 
 
 if __name__ == "__main__":
