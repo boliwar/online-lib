@@ -26,9 +26,13 @@ def parse_book_page(response, site_url, book_id):
     bs_result = BeautifulSoup(response.text, "html.parser")
     books_result = bs_result.body.find('div', attrs={'id': 'content'})
 
-    urls_result = bs_result.body.find('table', attrs={'class': 'd_book'})
-    urls_result = BeautifulSoup('<html>'+str(urls_result)+'</html>', "html.parser")
+    title_str = bs_result.body.find('h1')
+    img_struct = bs_result.body.find('div', attrs={'class': 'bookimage'})
+    img_struct = img_struct.find('img')
+
+    urls_result = books_result.find('table', attrs={'class': 'd_book'})
     urls_result = urls_result.findAll('a')
+
     url = ''
     for tag in urls_result:
         if tag.text == 'скачать txt':
@@ -40,24 +44,15 @@ def parse_book_page(response, site_url, book_id):
         raise WrongUrl
 
     comments_result = bs_result.body.findAll('div', attrs={'class': 'texts'})
-    comments_result = BeautifulSoup('<html>'+str(comments_result)+'</html>', "html.parser")
-    comments_result = comments_result.findAll('span')
-
     genres_result = bs_result.body.findAll('span', attrs={'class': 'd_book'})
-    genres_result = BeautifulSoup('<html>'+str(genres_result)+'</html>', "html.parser")
-    genres_result = genres_result.findAll('a')
-
-    bs_result = BeautifulSoup('<html>'+str(books_result)+'</html>', "html.parser")
-    img_struct = bs_result.find('img')
-    title_str = bs_result.find('h1')
 
     return {'index': str(book_id),
             'url': url,
             'title': f"{book_id}. {title_str.text.split('::')[0].strip()}",
             'author': title_str.text.split('::')[1].strip(),
             'img': urljoin(site_url, img_struct.get("src")),
-            'comments': [comment.text for comment in comments_result],
-            'genres': [genre.text for genre in genres_result],
+            'comments': [comment.text for comments in comments_result for comment in comments.find('span')],
+            'genres': [genre.text for genres in genres_result for genre in genres.findAll('a')],
             }
 
 
