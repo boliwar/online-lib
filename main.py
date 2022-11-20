@@ -10,6 +10,10 @@ from urllib.parse import urljoin, urlparse
 import argparse
 
 
+class WrongUrl(Exception):
+    """Raised when empty url"""
+    pass
+
 def create_books_team(site_url, firs_id=1, last_id=10):
     books_team = []
     for i in range(firs_id, last_id + 1):
@@ -17,6 +21,9 @@ def create_books_team(site_url, firs_id=1, last_id=10):
             books_team.append(parse_book_page(i, site_url))
         except requests.exceptions.TooManyRedirects:
             pass
+        except WrongUrl:
+            pass
+
     return books_team
 
 
@@ -35,6 +42,10 @@ def parse_book_page(book_id, site_url):
         if tag.text == 'скачать txt':
             url = tag.get('href')
             break
+    if url:
+        url = urljoin(site_url, url)
+    else:
+        raise WrongUrl
 
     comments_result = bs_result.body.findAll('div', attrs={'class': 'texts'})
     comments_result = BeautifulSoup('<html>'+str(comments_result)+'</html>', "html.parser")
@@ -49,8 +60,9 @@ def parse_book_page(book_id, site_url):
     title_str = bs_result.find('h1')
 
     return {'index': str(book_id),
-            'url': urljoin(site_url, url),
-            'title': f"{id}. {title_str.text.split('::')[0].strip()}",
+            'url': url,
+            'title': f"{book_id}. {title_str.text.split('::')[0].strip()}",
+            'author': title_str.text.split('::')[1].strip(),
             'img': urljoin(site_url, img_struct.get("src")),
             'comments': [comment.text for comment in comments_result],
             'genres': [genre.text for genre in genres_result],
@@ -62,8 +74,8 @@ def save_book(book, directory_books,  directory_images):
     book_id = pattern.findall(book['index'])[0]
     payload = {"id": book_id}
     file_name = sanitize_filename(book['title'])
-    return download_txt(f'{file_name}.txt', book['url'], payload, directory_books), \
-           download_image(book['img'], None, directory_images)
+    download_txt(f'{file_name}.txt', book['url'], payload, directory_books)
+    download_image(book['img'], None, directory_images)
 
 
 def check_for_redirect(response):
@@ -121,9 +133,11 @@ def main():
     directory_images = os.environ['DIRECTORY_IMAGES']
     site_url = os.environ['SITE_URL']
 
+
     books_team = create_books_team(site_url, start_id, end_id)
     for book in books_team:
-        print(save_book(book, directory_books, directory_images))
+        save_book(book, directory_books, directory_images)
+        print(book)
 
 
 if __name__ == "__main__":
