@@ -9,21 +9,21 @@ import re
 from urllib.parse import urljoin, urlparse, urlunparse
 
 
-def get_text_url(url='http://tululu.org/b32168/', find_txt='скачать txt'):
-    response = requests.get(url)
-    response.raise_for_status()
-    bs_result = BeautifulSoup(response.text, "html.parser")
-    download_panel = bs_result.body.findAll('a',)
-
-    path_url = ''
-    for teg in download_panel:
-        if teg.text == find_txt:
-            path_url = teg.get("href")
-            break
-
-    if path_url:
-        url_components = urlparse(url)
-        return urlunparse([url_components.scheme,url_components.netloc,path_url,'','',''])
+# def get_text_url(url='http://tululu.org/b32168/', find_txt='скачать txt'):
+#     response = requests.get(url)
+#     response.raise_for_status()
+#     bs_result = BeautifulSoup(response.text, "html.parser")
+#     download_panel = bs_result.body.findAll('a',)
+#
+#     path_url = ''
+#     for teg in download_panel:
+#         if teg.text == find_txt:
+#             path_url = teg.get("href")
+#             break
+#
+#     if path_url:
+#         url_components = urlparse(url)
+#         return urlunparse([url_components.scheme,url_components.netloc,path_url,'','',''])
 
 def  create_team_books(site_url, firs_id=1, last_id=10):
     team_books = []
@@ -40,6 +40,15 @@ def get_struct_book_by_id(id, site_url):
     check_for_redirect(response)
     bs_result = BeautifulSoup(response.text, "html.parser")
     books_result = bs_result.body.find('div', attrs={'id': 'content'})
+
+    comments_result = bs_result.body.findAll('div', attrs={'class': 'texts'})
+    comments_result = BeautifulSoup('<html>'+str(comments_result)+'</html>', "html.parser")
+    comments_result = comments_result.findAll('span')
+
+    genres_result = bs_result.body.findAll('span', attrs={'class': 'd_book'})
+    genres_result = BeautifulSoup('<html>'+str(genres_result)+'</html>', "html.parser")
+    genres_result =genres_result.findAll('a')
+
     bs_result = BeautifulSoup('<html>'+str(books_result)+'</html>', "html.parser")
     img_struct = bs_result.find('img')
     title_str = bs_result.find('h1')
@@ -47,6 +56,8 @@ def get_struct_book_by_id(id, site_url):
     return {'index': str(id),
             'title': f"{id}. {title_str.text.split('::')[0].strip()}",
             'img': urljoin(site_url,img_struct.get("src")),
+            'comments': [comment.text for comment in comments_result],
+            'genres': [genre.text for genre in genres_result],
             }
 
 
@@ -65,6 +76,7 @@ def get_team_books(url, count, site_url):
         team_books.append({'index': book_params.get("href"),
                            'title': book_params.get("title"),
                            'img': urljoin(site_url, img_params.get("src")),
+                           'comments': []
                            })
         i =+ 1
         if i >= count: break
@@ -77,6 +89,8 @@ def save_book(book, directory_books, download_url, directory_images):
     payload = {"id": book_id}
     file_name = sanitize_filename(book['title'])
     try:
+        # print(book['comments'])
+        print(book['genres'])
         return download_txt(f'{file_name}.txt', download_url, payload, directory_books), \
                download_image(book['img'], None, directory_images)
 
