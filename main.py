@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import re
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlunparse
 import argparse
 
 
@@ -18,11 +18,12 @@ def create_team_book(site_url, current_id):
     response = requests.get(urljoin(site_url, f"b{str(current_id)}"))
     response.raise_for_status()
     check_for_redirect(response)
-    return parse_book_page(response, site_url, current_id)
+    return parse_book_page(response, current_id)
 
 
-def parse_book_page(response, site_url, book_id):
-
+def parse_book_page(response, book_id):
+    site_member = urlparse(response.url)
+    site_url = r"://".join([site_member.scheme, site_member.netloc])
     bs_result = BeautifulSoup(response.text, "html.parser")
     books_result = bs_result.body.find('div', attrs={'id': 'content'})
 
