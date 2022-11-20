@@ -7,23 +7,8 @@ from dotenv import load_dotenv
 from pathlib import Path
 import re
 from urllib.parse import urljoin, urlparse, urlunparse
+import argparse
 
-
-# def get_text_url(url='http://tululu.org/b32168/', find_txt='скачать txt'):
-#     response = requests.get(url)
-#     response.raise_for_status()
-#     bs_result = BeautifulSoup(response.text, "html.parser")
-#     download_panel = bs_result.body.findAll('a',)
-#
-#     path_url = ''
-#     for teg in download_panel:
-#         if teg.text == find_txt:
-#             path_url = teg.get("href")
-#             break
-#
-#     if path_url:
-#         url_components = urlparse(url)
-#         return urlunparse([url_components.scheme,url_components.netloc,path_url,'','',''])
 
 def  create_team_books(site_url, firs_id=1, last_id=10):
     team_books = []
@@ -34,12 +19,22 @@ def  create_team_books(site_url, firs_id=1, last_id=10):
             pass
     return team_books
 
+
 def parse_book_page(id, site_url):
     response = requests.get(urljoin(site_url,f"b{str(id)}"))
     response.raise_for_status()
     check_for_redirect(response)
     bs_result = BeautifulSoup(response.text, "html.parser")
     books_result = bs_result.body.find('div', attrs={'id': 'content'})
+
+    urls_result = bs_result.body.find('table', attrs={'class': 'd_book'})
+    urls_result = BeautifulSoup('<html>'+str(urls_result)+'</html>', "html.parser")
+    urls_result = urls_result.findAll('a')
+    url = ''
+    for tag in urls_result:
+        if tag.text == 'скачать txt':
+            url = tag.get('href')
+            break
 
     comments_result = bs_result.body.findAll('div', attrs={'class': 'texts'})
     comments_result = BeautifulSoup('<html>'+str(comments_result)+'</html>', "html.parser")
@@ -54,6 +49,7 @@ def parse_book_page(id, site_url):
     title_str = bs_result.find('h1')
 
     return {'index': str(id),
+            'url': urljoin(site_url,url),
             'title': f"{id}. {title_str.text.split('::')[0].strip()}",
             'img': urljoin(site_url,img_struct.get("src")),
             'comments': [comment.text for comment in comments_result],
@@ -61,37 +57,13 @@ def parse_book_page(id, site_url):
             }
 
 
-def get_team_books(url, count, site_url):
-    response = requests.get(url)
-    response.raise_for_status()
-    bs_result = BeautifulSoup(response.text, "html.parser")
-    books_result = bs_result.body.findAll('div', attrs={'class': 'bookimage'} )
-    team_books = []
-    i = 0
-    for book_struct in books_result:
-        struct = BeautifulSoup('<html>'+str(book_struct)+'</html>', "html.parser")
-        book_params = struct.find('a')
-        img_struct = BeautifulSoup('<html>'+str(book_params)+'</html>', "html.parser")
-        img_params = img_struct.find('img')
-        team_books.append({'index': book_params.get("href"),
-                           'title': book_params.get("title"),
-                           'img': urljoin(site_url, img_params.get("src")),
-                           'comments': []
-                           })
-        i =+ 1
-        if i >= count: break
-    return team_books
-
-
-def save_book(book, directory_books, download_url, directory_images):
+def save_book(book, directory_books,  directory_images):
     pattern = re.compile(r'\d+')
     book_id = pattern.findall(book['index'])[0]
     payload = {"id": book_id}
     file_name = sanitize_filename(book['title'])
     try:
-        # print(book['comments'])
-        print(book['genres'])
-        return download_txt(f'{file_name}.txt', download_url, payload, directory_books), \
+        return download_txt(f'{file_name}.txt', book['url'], payload, directory_books), \
                download_image(book['img'], None, directory_images)
 
     except requests.exceptions.TooManyRedirects:
@@ -101,6 +73,7 @@ def save_book(book, directory_books, download_url, directory_images):
 def check_for_redirect(response):
     if response.history and response.url=='https://tululu.org/':
         raise requests.exceptions.TooManyRedirects
+
 
 def download_txt(file_name, url, payload=None ,directory_books='books/'):
     response = requests.get(url, params=payload)
@@ -114,6 +87,7 @@ def download_txt(file_name, url, payload=None ,directory_books='books/'):
         file.write(response.content)
 
     return Path(directory_book, file_name)
+
 
 def download_image(url, payload=None ,directory_images='images/'):
     response = requests.get(url, params=payload)
@@ -132,19 +106,28 @@ def download_image(url, payload=None ,directory_images='images/'):
     return Path(directory_book, file_name)
 
 
+def create_parser():
+    parser = argparse.ArgumentParser(description='Bot for load images to Telegram channel')
+    parser.add_argument('--start_id', type=int, nargs='?', default=1,
+                        help='Book ID to start with. Default 1.')
+    parser.add_argument('--end_id', type=int, nargs='?', default=10,
+                        help='Book ID to end with. Default 10.')
+    return parser
+
+
 def main():
+    parser = create_parser()
+    command_line_arguments = parser.parse_args()
+    start_id = command_line_arguments.start_id
+    end_id = command_line_arguments.end_id
     load_dotenv()
     directory_books = os.environ['DIRECTORY_BOOKS']
     directory_images = os.environ['DIRECTORY_IMAGES']
-    books_count = int(os.environ['BOOKS_COUNT'])
     site_url = os.environ['SITE_URL']
-    books_team_url = urljoin(site_url,os.environ['BOOKS_TEAM_URL'])
-    download_url = urljoin(site_url,os.environ['DOWNLOAD_URL'])
 
-    # team_books = get_team_books(books_team_url, books_count, site_url)
-    team_books = create_team_books(site_url)
+    team_books = create_team_books(site_url, start_id, end_id)
     for book in team_books:
-        print(save_book(book, directory_books, download_url, directory_images))
+        print(save_book(book, directory_books, directory_images))
 
 if __name__ == "__main__":
     main()
