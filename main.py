@@ -27,6 +27,7 @@ def parse_book_page(response, site_url, book_id):
     books_result = bs_result.body.find('div', attrs={'id': 'content'})
 
     title_str = bs_result.body.find('h1')
+    title, author = title_str.text.split('::')
     img_struct = bs_result.body.find('div', attrs={'class': 'bookimage'})
     img_struct = img_struct.find('img')
 
@@ -46,10 +47,11 @@ def parse_book_page(response, site_url, book_id):
     comments_result = bs_result.body.findAll('div', attrs={'class': 'texts'})
     genres_result = bs_result.body.findAll('span', attrs={'class': 'd_book'})
 
+
     return {'index': str(book_id),
             'url': url,
-            'title': f"{book_id}. {title_str.text.split('::')[0].strip()}",
-            'author': title_str.text.split('::')[1].strip(),
+            'title': f"{book_id}. {title.strip()}",
+            'author': author.strip(),
             'img': urljoin(site_url, img_struct.get("src")),
             'comments': [comment.text for comments in comments_result for comment in comments.find('span')],
             'genres': [genre.text for genres in genres_result for genre in genres.findAll('a')],
