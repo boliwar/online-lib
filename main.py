@@ -14,23 +14,15 @@ class WrongUrl(Exception):
     """Raised when empty url"""
     pass
 
-def create_books_team(site_url, firs_id=1, last_id=10):
-    books_team = []
-    for current_id in range(firs_id, last_id + 1):
-        try:
-            books_team.append(parse_book_page(current_id, site_url))
-        except requests.exceptions.TooManyRedirects:
-            pass
-        except WrongUrl:
-            pass
-
-    return books_team
-
-
-def parse_book_page(book_id, site_url):
-    response = requests.get(urljoin(site_url, f"b{str(book_id)}"))
+def create_team_book(site_url, current_id):
+    response = requests.get(urljoin(site_url, f"b{str(current_id)}"))
     response.raise_for_status()
     check_for_redirect(response)
+    return parse_book_page(response, site_url, current_id)
+
+
+def parse_book_page(response, site_url, book_id):
+
     bs_result = BeautifulSoup(response.text, "html.parser")
     books_result = bs_result.body.find('div', attrs={'id': 'content'})
 
@@ -133,8 +125,15 @@ def main():
     images_directory = os.environ['IMAGES_DIRECTORY']
     site_url = os.environ['SITE_URL']
 
+    books_team = []
+    for current_id in range(start_id, end_id + 1):
+        try:
+            books_team.append(create_team_book(site_url, current_id))
+        except requests.exceptions.TooManyRedirects:
+            pass
+        except WrongUrl:
+            pass
 
-    books_team = create_books_team(site_url, start_id, end_id)
     for book in books_team:
         save_book(book, books_directory, images_directory)
         print(f"Название: {book['title']}")
