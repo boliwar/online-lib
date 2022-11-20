@@ -69,13 +69,13 @@ def parse_book_page(book_id, site_url):
             }
 
 
-def save_book(book, directory_books,  directory_images):
+def save_book(book, books_directory,  images_directory):
     pattern = re.compile(r'\d+')
     book_id = pattern.findall(book['index'])[0]
     payload = {"id": book_id}
     file_name = sanitize_filename(book['title'])
-    download_txt(f'{file_name}.txt', book['url'], payload, directory_books)
-    download_image(book['img'], None, directory_images)
+    download_txt(f'{file_name}.txt', book['url'], payload, books_directory)
+    download_image(book['img'], None, images_directory)
 
 
 def check_for_redirect(response):
@@ -83,35 +83,35 @@ def check_for_redirect(response):
         raise requests.exceptions.TooManyRedirects
 
 
-def download_txt(file_name, url, payload=None, directory_books='books/'):
+def download_txt(file_name, url, payload=None, books_directory='books/'):
     response = requests.get(url, params=payload)
     response.raise_for_status()
     check_for_redirect(response)
 
-    directory_book = Path(os.getcwd(), directory_books)
-    directory_book.mkdir(parents=True, exist_ok=True)
+    book_directory = Path(os.getcwd(), books_directory)
+    book_directory.mkdir(parents=True, exist_ok=True)
 
-    with open(Path(directory_book, file_name), 'wb') as file:
+    with open(Path(book_directory, file_name), 'wb') as file:
         file.write(response.content)
 
-    return Path(directory_book, file_name)
+    return Path(book_directory, file_name)
 
 
-def download_image(url, payload=None, directory_images='images/'):
+def download_image(url, payload=None, images_directory='images/'):
     response = requests.get(url, params=payload)
     response.raise_for_status()
     check_for_redirect(response)
 
-    directory_book = Path(os.getcwd(), directory_images)
-    directory_book.mkdir(parents=True, exist_ok=True)
+    image_directory = Path(os.getcwd(), images_directory)
+    image_directory.mkdir(parents=True, exist_ok=True)
 
     url_components = urlparse(url)
     file_path, file_name = os.path.split(url_components.path)
 
-    with open(Path(directory_images, file_name), 'wb') as file:
+    with open(Path(images_directory, file_name), 'wb') as file:
         file.write(response.content)
 
-    return Path(directory_book, file_name)
+    return Path(images_directory, file_name)
 
 
 def create_parser():
@@ -129,14 +129,14 @@ def main():
     start_id = command_line_arguments.start_id
     end_id = command_line_arguments.end_id
     load_dotenv()
-    directory_books = os.environ['DIRECTORY_BOOKS']
-    directory_images = os.environ['DIRECTORY_IMAGES']
+    books_directory = os.environ['BOOKS_DIRECTORY']
+    images_directory = os.environ['IMAGES_DIRECTORY']
     site_url = os.environ['SITE_URL']
 
 
     books_team = create_books_team(site_url, start_id, end_id)
     for book in books_team:
-        save_book(book, directory_books, directory_images)
+        save_book(book, books_directory, images_directory)
         print(f"Название: {book['title']}")
         print(f"Автор: {book['author']}")
         print()
