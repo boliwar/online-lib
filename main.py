@@ -16,9 +16,9 @@ class WrongUrl(Exception):
 
 def create_books_team(site_url, firs_id=1, last_id=10):
     books_team = []
-    for i in range(firs_id, last_id + 1):
+    for current_id in range(firs_id, last_id + 1):
         try:
-            books_team.append(parse_book_page(i, site_url))
+            books_team.append(parse_book_page(current_id, site_url))
         except requests.exceptions.TooManyRedirects:
             pass
         except WrongUrl:
