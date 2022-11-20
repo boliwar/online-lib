@@ -29,12 +29,12 @@ def  create_team_books(site_url, firs_id=1, last_id=10):
     team_books = []
     for i in range(firs_id, last_id + 1):
         try:
-            team_books.append(get_struct_book_by_id(i, site_url))
+            team_books.append(parse_book_page(i, site_url))
         except requests.exceptions.TooManyRedirects:
             pass
     return team_books
 
-def get_struct_book_by_id(id, site_url):
+def parse_book_page(id, site_url):
     response = requests.get(urljoin(site_url,f"b{str(id)}"))
     response.raise_for_status()
     check_for_redirect(response)
