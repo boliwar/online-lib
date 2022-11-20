@@ -6,22 +6,22 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import re
-from urllib.parse import urljoin, urlparse, urlunparse
+from urllib.parse import urljoin, urlparse
 import argparse
 
 
-def  create_team_books(site_url, firs_id=1, last_id=10):
-    team_books = []
+def create_books_team(site_url, firs_id=1, last_id=10):
+    books_team = []
     for i in range(firs_id, last_id + 1):
         try:
-            team_books.append(parse_book_page(i, site_url))
+            books_team.append(parse_book_page(i, site_url))
         except requests.exceptions.TooManyRedirects:
             pass
-    return team_books
+    return books_team
 
 
-def parse_book_page(id, site_url):
-    response = requests.get(urljoin(site_url,f"b{str(id)}"))
+def parse_book_page(book_id, site_url):
+    response = requests.get(urljoin(site_url, f"b{str(book_id)}"))
     response.raise_for_status()
     check_for_redirect(response)
     bs_result = BeautifulSoup(response.text, "html.parser")
@@ -42,16 +42,16 @@ def parse_book_page(id, site_url):
 
     genres_result = bs_result.body.findAll('span', attrs={'class': 'd_book'})
     genres_result = BeautifulSoup('<html>'+str(genres_result)+'</html>', "html.parser")
-    genres_result =genres_result.findAll('a')
+    genres_result = genres_result.findAll('a')
 
     bs_result = BeautifulSoup('<html>'+str(books_result)+'</html>', "html.parser")
     img_struct = bs_result.find('img')
     title_str = bs_result.find('h1')
 
-    return {'index': str(id),
-            'url': urljoin(site_url,url),
+    return {'index': str(book_id),
+            'url': urljoin(site_url, url),
             'title': f"{id}. {title_str.text.split('::')[0].strip()}",
-            'img': urljoin(site_url,img_struct.get("src")),
+            'img': urljoin(site_url, img_struct.get("src")),
             'comments': [comment.text for comment in comments_result],
             'genres': [genre.text for genre in genres_result],
             }
@@ -62,25 +62,21 @@ def save_book(book, directory_books,  directory_images):
     book_id = pattern.findall(book['index'])[0]
     payload = {"id": book_id}
     file_name = sanitize_filename(book['title'])
-    try:
-        return download_txt(f'{file_name}.txt', book['url'], payload, directory_books), \
-               download_image(book['img'], None, directory_images)
-
-    except requests.exceptions.TooManyRedirects:
-        pass
+    return download_txt(f'{file_name}.txt', book['url'], payload, directory_books), \
+           download_image(book['img'], None, directory_images)
 
 
 def check_for_redirect(response):
-    if response.history and response.url=='https://tululu.org/':
+    if response.history and response.url == 'https://tululu.org/':
         raise requests.exceptions.TooManyRedirects
 
 
-def download_txt(file_name, url, payload=None ,directory_books='books/'):
+def download_txt(file_name, url, payload=None, directory_books='books/'):
     response = requests.get(url, params=payload)
     response.raise_for_status()
     check_for_redirect(response)
 
-    directory_book = Path(os.getcwd(),directory_books)
+    directory_book = Path(os.getcwd(), directory_books)
     directory_book.mkdir(parents=True, exist_ok=True)
 
     with open(Path(directory_book, file_name), 'wb') as file:
@@ -89,12 +85,12 @@ def download_txt(file_name, url, payload=None ,directory_books='books/'):
     return Path(directory_book, file_name)
 
 
-def download_image(url, payload=None ,directory_images='images/'):
+def download_image(url, payload=None, directory_images='images/'):
     response = requests.get(url, params=payload)
     response.raise_for_status()
     check_for_redirect(response)
 
-    directory_book = Path(os.getcwd(),directory_images)
+    directory_book = Path(os.getcwd(), directory_images)
     directory_book.mkdir(parents=True, exist_ok=True)
 
     url_components = urlparse(url)
@@ -125,9 +121,10 @@ def main():
     directory_images = os.environ['DIRECTORY_IMAGES']
     site_url = os.environ['SITE_URL']
 
-    team_books = create_team_books(site_url, start_id, end_id)
-    for book in team_books:
+    books_team = create_books_team(site_url, start_id, end_id)
+    for book in books_team:
         print(save_book(book, directory_books, directory_images))
+
 
 if __name__ == "__main__":
     main()
