@@ -52,15 +52,6 @@ def parse_book_page(response, book_id):
             }
 
 
-def save_book(book, books_directory,  images_directory):
-    pattern = re.compile(r'\d+')
-    book_id = pattern.findall(book['index'])[0]
-    payload = {"id": book_id}
-    file_name = sanitize_filename(book['title'])
-    download_txt(f'{file_name}.txt', book['url'], payload, books_directory)
-    download_image(book['img'], None, images_directory)
-
-
 def check_for_redirect(response):
     if response.history and response.url == 'https://tululu.org/':
         raise requests.exceptions.TooManyRedirects
@@ -128,7 +119,12 @@ def main():
             response.raise_for_status()
             check_for_redirect(response)
             book = parse_book_page(response, current_id)
-            save_book(book, books_directory, images_directory)
+            pattern = re.compile(r'\d+')
+            book_id = pattern.findall(book['index'])[0]
+            payload = {"id": book_id}
+            file_name = sanitize_filename(book['title'])
+            download_txt(f'{file_name}.txt', book['url'], payload, books_directory)
+            download_image(book['img'], None, images_directory)
             print(f"Название: {book['title']}")
             print(f"Автор: {book['author']}")
         except requests.exceptions.TooManyRedirects:
