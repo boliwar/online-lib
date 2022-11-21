@@ -117,14 +117,16 @@ def main():
     site_url = os.environ['SITE_URL']
     timeout = 10
 
-    books_team = []
+    book = {}
     for current_id in range(start_id, end_id + 1):
         try:
             response = requests.get(urljoin(site_url, f"b{str(current_id)}"))
             response.raise_for_status()
             check_for_redirect(response)
-            books_team.append(parse_book_page(response, current_id))
-
+            book = parse_book_page(response, current_id)
+            save_book(book, books_directory, images_directory)
+            print(f"Название: {book['title']}")
+            print(f"Автор: {book['author']}")
         except requests.exceptions.TooManyRedirects:
             print(f'TooManyRedirects. ИД = {current_id}, ошибочное перенаправление.')
         except WrongUrl:
@@ -132,18 +134,10 @@ def main():
         except requests.exceptions.ConnectionError:
             print(f'ConnectionError. Таймаут: {timeout}сек.')
             time.sleep(timeout)
-
-    for book in books_team:
-        try:
-            save_book(book, books_directory, images_directory)
-            print(f"Название: {book['title']}")
-            print(f"Автор: {book['author']}")
-            print()
-        except requests.exceptions.ConnectionError:
-            print(f'ConnectionError. Таймаут: {timeout}сек.')
-            time.sleep(timeout)
         except requests.exceptions.HTTPError:
             print(f'HTTPError. Проверьте урлы: текст = {book["url"]}, картинка = {book["img"]}.')
+        finally:
+            print()
 
 
 if __name__ == "__main__":
