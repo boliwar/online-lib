@@ -15,12 +15,6 @@ class WrongUrl(Exception):
     """Raised when empty url"""
     pass
 
-def create_team_book(site_url, current_id):
-    response = requests.get(urljoin(site_url, f"b{str(current_id)}"))
-    response.raise_for_status()
-    check_for_redirect(response)
-    return parse_book_page(response, current_id)
-
 
 def parse_book_page(response, book_id):
     site_member = urlparse(response.url)
@@ -128,9 +122,13 @@ def main():
     books_team = []
     for current_id in range(start_id, end_id + 1):
         try:
-            books_team.append(create_team_book(site_url, current_id))
+            response = requests.get(urljoin(site_url, f"b{str(current_id)}"))
+            response.raise_for_status()
+            check_for_redirect(response)
+            books_team.append(parse_book_page(response, current_id))
+
         except requests.exceptions.TooManyRedirects:
-            pass
+            print(f'TooManyRedirects. ИД = {current_id}, ошибочное перенаправление.')
         except WrongUrl:
             print(f'WrongUrl. ИД = {current_id}, нет ссылки для скачивания.')
         except requests.exceptions.ConnectionError:
