@@ -19,19 +19,19 @@ class WrongUrl(Exception):
 def parse_book_page(response, book_id):
     site_member = urlparse(response.url)
     site_url = r"://".join([site_member.scheme, site_member.netloc])
-    bs_result = BeautifulSoup(response.text, "html.parser")
-    books_result = bs_result.body.find('div', attrs={'id': 'content'})
+    soup_result = BeautifulSoup(response.text, "html.parser")
+    div_id_content_part = soup_result.body.find('div', attrs={'id': 'content'})
 
-    title_str = bs_result.body.find('h1')
+    title_str = soup_result.body.find('h1')
     title, author = title_str.text.split('::')
-    img_struct = bs_result.body.find('div', attrs={'class': 'bookimage'})
+    img_struct = soup_result.body.find('div', attrs={'class': 'bookimage'})
     img_struct = img_struct.find('img')
 
-    urls_result = books_result.find('table', attrs={'class': 'd_book'})
-    urls_result = urls_result.findAll('a')
+    table_class_d_book_part = div_id_content_part.find('table', attrs={'class': 'd_book'})
+    found_urls = table_class_d_book_part.findAll('a')
 
     url = ''
-    for tag in urls_result:
+    for tag in found_urls:
         if tag.text == 'скачать txt':
             url = tag.get('href')
             break
@@ -40,8 +40,8 @@ def parse_book_page(response, book_id):
     else:
         raise WrongUrl
 
-    comments_result = bs_result.body.findAll('div', attrs={'class': 'texts'})
-    genres_result = bs_result.body.findAll('span', attrs={'class': 'd_book'})
+    div_class_texts_part = soup_result.body.findAll('div', attrs={'class': 'texts'})
+    span_class_d_book_part = soup_result.body.findAll('span', attrs={'class': 'd_book'})
 
 
     return {'index': str(book_id),
@@ -49,8 +49,8 @@ def parse_book_page(response, book_id):
             'title': f"{book_id}. {title.strip()}",
             'author': author.strip(),
             'img': urljoin(site_url, img_struct.get("src")),
-            'comments': [comment.text for comments in comments_result for comment in comments.find('span')],
-            'genres': [genre.text for genres in genres_result for genre in genres.findAll('a')],
+            'comments': [comment.text for comments in div_class_texts_part for comment in comments.find('span')],
+            'genres': [genre.text for genres in span_class_d_book_part for genre in genres.findAll('a')],
             }
 
 
