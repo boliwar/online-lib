@@ -33,11 +33,9 @@ def parse_book_page(response, book_id):
     url = ''
     for tag in found_urls:
         if tag.text == 'скачать txt':
-            url = tag.get('href')
+            url = urljoin(site_url, tag.get('href'))
             break
-    if url:
-        url = urljoin(site_url, url)
-    else:
+    if not url:
         raise WrongUrl
 
     div_class_texts_part = soup_result.body.findAll('div', attrs={'class': 'texts'})
