@@ -65,12 +65,12 @@ def download_txt(file_name, url, payload=None, books_directory='books/'):
     book_directory = Path(os.getcwd(), books_directory)
     book_directory.mkdir(parents=True, exist_ok=True)
 
-    file_name = Path(book_directory, file_name)
+    filepath = Path(book_directory, file_name)
 
-    with open(file_name, 'wb') as file:
+    with open(filepath, 'wb') as file:
         file.write(response.content)
 
-    return file_name
+    return filepath
 
 
 def download_image(url, payload=None, images_directory='images/'):
@@ -84,12 +84,12 @@ def download_image(url, payload=None, images_directory='images/'):
     url_components = urlparse(url)
     file_path, file_name = os.path.split(url_components.path)
 
-    file_name = Path(images_directory, file_name)
+    filepath = Path(images_directory, file_name)
 
-    with open(file_name, 'wb') as file:
+    with open(filepath, 'wb') as file:
         file.write(response.content)
 
-    return file_name
+    return filepath
 
 
 def create_parser():
