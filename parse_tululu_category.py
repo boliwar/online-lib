@@ -16,6 +16,10 @@ def create_parser():
     parser = argparse.ArgumentParser(description='Bot for load images to Telegram channel')
     parser.add_argument('--category', nargs='?', default='l55',
                         help='Categories of books. Default "l55".')
+    parser.add_argument('--start_page', type=int, nargs='?', default=1,
+                        help='Start page for download. Default 1.')
+    parser.add_argument('--end_page', type=int, nargs='?', default=702,
+                        help='End page for download, not included. Default 702.')
     return parser
 
 
@@ -28,12 +32,13 @@ def main():
     images_directory = os.environ['IMAGES_DIRECTORY']
     site_url = os.environ['SITE_URL']
     timeout = 10
-    start_page = 1
-    end_page = 1
+    start_page = command_line_arguments.start_page
+    end_page = command_line_arguments.end_page
     pattern = re.compile(r'\d+')
     team_books=[]
 
-    for page in range(start_page, end_page + 1):
+
+    for page in range(start_page, end_page):
         response = requests.get(urljoin(site_url, f"{books_category}/{page}/"))
         response.raise_for_status()
         soup_result = BeautifulSoup(response.text, "html.parser")
@@ -66,8 +71,6 @@ def main():
                     time.sleep(timeout)
                 except requests.exceptions.HTTPError:
                     print(f'HTTPError. Проверьте урлы: текст = {book["url"]}, картинка = {book["img"]}.')
-                # finally:
-                #     print()
 
     pprint(team_books)
     books_json = json.dumps(team_books)
