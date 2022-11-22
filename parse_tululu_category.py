@@ -33,20 +33,20 @@ def main():
     soup_result = BeautifulSoup(response.text, "html.parser")
     div_id_content_part = soup_result.body.find('div', attrs={'id': 'content'})
 
-    table_class_d_book_part = div_id_content_part.find('table', attrs={'class': 'd_book'})
+    table_class_d_book_part = div_id_content_part.findAll('table', attrs={'class': 'd_book'})
 
-    found_urls = table_class_d_book_part.findAll('a')
-    print(found_urls)
+    for book in table_class_d_book_part:
+        found_urls = book.findAll('a')
 
-    url = ''
-    for tag in found_urls:
-        if tag.text == 'скачать книгу':
-            url = urljoin(site_url, tag.get('href'))
-            break
-    # if not url:
-    #     raise WrongUrl
+        url = ''
+        for tag in found_urls:
+            if tag.text == 'скачать книгу':
+                url = urljoin(site_url, tag.get('href'))
+                break
+        # if not url:
+        #     raise WrongUrl
 
-    print(url, '***')
+        print(url)
 
 if __name__ == "__main__":
     main()
