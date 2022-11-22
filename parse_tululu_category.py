@@ -26,27 +26,29 @@ def main():
     images_directory = os.environ['IMAGES_DIRECTORY']
     site_url = os.environ['SITE_URL']
     timeout = 10
+    start_page = 1
+    end_page = 10
 
-    book = {}
-    response = requests.get(urljoin(site_url, f"{books_category}/"))
-    response.raise_for_status()
-    soup_result = BeautifulSoup(response.text, "html.parser")
-    div_id_content_part = soup_result.body.find('div', attrs={'id': 'content'})
+    for page in range(start_page, end_page + 1):
+        response = requests.get(urljoin(site_url, f"{books_category}/{page}/"))
+        response.raise_for_status()
+        soup_result = BeautifulSoup(response.text, "html.parser")
+        div_id_content_part = soup_result.body.find('div', attrs={'id': 'content'})
 
-    table_class_d_book_part = div_id_content_part.findAll('table', attrs={'class': 'd_book'})
+        table_class_d_book_part = div_id_content_part.findAll('table', attrs={'class': 'd_book'})
 
-    for book in table_class_d_book_part:
-        found_urls = book.findAll('a')
+        for book in table_class_d_book_part:
+            found_urls = book.findAll('a')
 
-        url = ''
-        for tag in found_urls:
-            if tag.text == 'скачать книгу':
-                url = urljoin(site_url, tag.get('href'))
-                break
-        # if not url:
-        #     raise WrongUrl
+            url = ''
+            for tag in found_urls:
+                if tag.text == 'скачать книгу':
+                    url = urljoin(site_url, tag.get('href'))
+                    break
+            # if not url:
+            #     raise WrongUrl
 
-        print(url)
+            print(url)
 
 if __name__ == "__main__":
     main()
