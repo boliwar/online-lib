@@ -1,5 +1,5 @@
 from pprint import pprint
-
+from pathlib import Path
 import requests
 from main import WrongUrl, check_for_redirect, parse_book_page, sanitize_filename, download_txt, download_image
 import os
@@ -13,13 +13,24 @@ import json
 
 
 def create_parser():
-    parser = argparse.ArgumentParser(description='Bot for load images to Telegram channel')
+    parser = argparse.ArgumentParser(description='Load books')
     parser.add_argument('--category', nargs='?', default='l55',
                         help='Categories of books. Default "l55".')
     parser.add_argument('--start_page', type=int, nargs='?', default=1,
                         help='Start page for download. Default 1.')
     parser.add_argument('--end_page', type=int, nargs='?', default=702,
                         help='End page for download, not included. Default 702.')
+    parser.add_argument('--dest_folder',  nargs='?', default='',
+                        help='Path to the directory with parsing results: pictures, books, JSON. '
+                             'Default current dirictory.')
+    parser.add_argument('--skip_imgs', nargs='?', default='No',
+                        help='Do not download pictures Yes/No. Default "No".')
+    parser.add_argument('--skip_txt', nargs='?', default='No',
+                        help='Do not download text Yes/No. Default "No".')
+    parser.add_argument('--json_path', nargs='?', default='',
+                        help='Path to the directory JSON file.'
+                             'Default current dirictory.')
+
     return parser
 
 
@@ -27,16 +38,21 @@ def main():
     parser = create_parser()
     command_line_arguments = parser.parse_args()
     books_category = command_line_arguments.category
-    load_dotenv()
-    books_directory = os.environ['BOOKS_DIRECTORY']
-    images_directory = os.environ['IMAGES_DIRECTORY']
-    site_url = os.environ['SITE_URL']
-    timeout = 10
+    dest_folder = command_line_arguments.dest_folder
     start_page = command_line_arguments.start_page
     end_page = command_line_arguments.end_page
-    pattern = re.compile(r'\d+')
-    team_books=[]
+    skip_imgs = command_line_arguments.skip_imgs == 'No'
+    skip_txt = command_line_arguments.skip_txt == 'No'
+    json_path = command_line_arguments.json_path
+    load_dotenv()
 
+    books_directory = Path(dest_folder, os.environ['BOOKS_DIRECTORY'])
+    images_directory = Path(dest_folder, os.environ['IMAGES_DIRECTORY'])
+    site_url = os.environ['SITE_URL']
+
+    timeout = 10
+    pattern = re.compile(r'\d+')
+    team_books = []
 
     for page in range(start_page, end_page):
         response = requests.get(urljoin(site_url, f"{books_category}/{page}/"))
@@ -46,7 +62,6 @@ def main():
         selector = "div#content table.d_book a"
         a_tags = soup_result.select(selector)
 
-        url = ''
         for tag in a_tags:
             if tag.text == 'скачать книгу' or tag.text == 'читатели о книге':
                 url = urljoin(site_url, tag.get('href'))
@@ -59,8 +74,10 @@ def main():
                     book = parse_book_page(response, book_id)
                     payload = {"id": book_id}
                     file_name = sanitize_filename(book['title'])
-                    download_txt(f'{file_name}.txt', book['url'], payload, books_directory)
-                    download_image(book['img'], None, images_directory)
+                    if skip_txt:
+                        download_txt(f'{file_name}.txt', book['url'], payload, books_directory)
+                    if skip_imgs:
+                        download_image(book['img'], None, images_directory)
                     team_books.append(book)
                 except requests.exceptions.TooManyRedirects:
                     print(f'TooManyRedirects. ИД = {book_id}, ошибочное перенаправление.')
@@ -72,10 +89,14 @@ def main():
                 except requests.exceptions.HTTPError:
                     print(f'HTTPError. Проверьте урлы: текст = {book["url"]}, картинка = {book["img"]}.')
 
-    pprint(team_books)
-    books_json = json.dumps(team_books)
+    # pprint(team_books)
+    if json_path:
+        filepath = Path(json_path, "books.json")
+    else:
+        filepath = Path(dest_folder, "books.json")
 
-    with open("books.json", "w", encoding='utf8') as filejson:
+    with open(filepath, "w", encoding='utf8') as filejson:
+        books_json = json.dumps(team_books, ensure_ascii=False, indent=4, separators=(',', ':'))
         filejson.write(books_json)
 
 if __name__ == "__main__":

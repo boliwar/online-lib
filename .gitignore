@@ -162,3 +162,4 @@ cython_debug/
 /images
 *.json
 books.json
+*.json
