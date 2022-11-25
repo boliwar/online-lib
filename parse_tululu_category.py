@@ -76,31 +76,32 @@ def main():
         a_tags = soup_result.select(selector)
 
         for tag in a_tags:
-            if tag.text == 'скачать книгу' or tag.text == 'читатели о книге':
-                url = urljoin(site_url, tag.get('href'))
-                try:
-                    response = requests.get(url)
-                    response.raise_for_status()
-                    check_for_redirect(response)
-                    url_components = urlparse(url)
-                    book_id = pattern.findall(url_components.path)[0]
-                    book = parse_book_page(response, book_id)
-                    payload = {"id": book_id}
-                    file_name = sanitize_filename(book['title'])
-                    if skip_txt:
-                        download_txt(f'{file_name}.txt', book['url'], payload, books_directory)
-                    if skip_imgs:
-                        download_image(book['img'], None, images_directory)
-                    team_books.append(book)
-                except requests.exceptions.TooManyRedirects:
-                    print(f'TooManyRedirects. ИД = {book_id}, ошибочное перенаправление.')
-                except WrongUrl:
-                    print(f'WrongUrl. ИД = {book_id}, нет ссылки для скачивания.')
-                except requests.exceptions.ConnectionError:
-                    print(f'ConnectionError. Таймаут: {timeout}сек.')
-                    time.sleep(timeout)
-                except requests.exceptions.HTTPError:
-                    print(f'HTTPError. Проверьте урлы: текст = {book["url"]}, картинка = {book["img"]}.')
+            if not (tag.text == 'скачать книгу' or tag.text == 'читатели о книге'):
+                continue
+            url = urljoin(site_url, tag.get('href'))
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+                check_for_redirect(response)
+                url_components = urlparse(url)
+                book_id = pattern.findall(url_components.path)[0]
+                book = parse_book_page(response, book_id)
+                payload = {"id": book_id}
+                file_name = sanitize_filename(book['title'])
+                if skip_txt:
+                    download_txt(f'{file_name}.txt', book['url'], payload, books_directory)
+                if skip_imgs:
+                    download_image(book['img'], None, images_directory)
+                team_books.append(book)
+            except requests.exceptions.TooManyRedirects:
+                print(f'TooManyRedirects. ИД = {book_id}, ошибочное перенаправление.')
+            except WrongUrl:
+                print(f'WrongUrl. ИД = {book_id}, нет ссылки для скачивания.')
+            except requests.exceptions.ConnectionError:
+                print(f'ConnectionError. Таймаут: {timeout}сек.')
+                time.sleep(timeout)
+            except requests.exceptions.HTTPError:
+                print(f'HTTPError. Проверьте урлы: текст = {book["url"]}, картинка = {book["img"]}.')
 
     # pprint(team_books)
     if json_path:
