@@ -23,9 +23,9 @@ def create_parser():
     parser.add_argument('--dest_folder',  nargs='?', default='',
                         help='Path to the directory with parsing results: pictures, books, JSON. '
                              'Default current dirictory.')
-    parser.add_argument('--skip_imgs', action='store_false',
+    parser.add_argument('--skip_imgs', action='store_true',
                         help='Used for not download pictures.')
-    parser.add_argument('--skip_txt', action='store_false',
+    parser.add_argument('--skip_txt', action='store_true',
                         help='Used not download text.')
     parser.add_argument('--json_path', nargs='?', default='',
                         help='Path to the directory JSON file.'
@@ -91,9 +91,9 @@ def main():
                 book = parse_book_page(response, book_id)
                 payload = {"id": book_id}
                 file_name = sanitize_filename(book['title'])
-                if skip_txt:
+                if not skip_txt:
                     download_txt(f'{file_name}.txt', book['url'], payload, books_directory)
-                if skip_imgs:
+                if not skip_imgs:
                     download_image(book['img'], None, images_directory)
                 team_books.append(book)
             except requests.exceptions.TooManyRedirects:
