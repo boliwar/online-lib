@@ -70,6 +70,8 @@ def main():
             print(f'HTTPError. Проверьте урлы: {response.url}.')
             continue
 
+        site_members = urlparse(response.url)
+        base_url = r"://".join([site_members.scheme, site_members.netloc])
         soup_result = BeautifulSoup(response.text, "html.parser")
 
         selector = "div#content table.d_book a"
@@ -78,7 +80,8 @@ def main():
         for tag in a_tags:
             if not (tag.text == 'скачать книгу' or tag.text == 'читатели о книге'):
                 continue
-            url = urljoin(site_url, tag.get('href'))
+
+            url = urljoin(base_url, tag.get('href'))
             try:
                 response = requests.get(url)
                 response.raise_for_status()
