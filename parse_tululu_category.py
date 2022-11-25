@@ -55,8 +55,21 @@ def main():
     team_books = []
 
     for page in range(start_page, end_page):
-        response = requests.get(urljoin(site_url, f"{books_category}/{page}/"))
-        response.raise_for_status()
+        try:
+            response = requests.get(urljoin(site_url, f"{books_category}/{page}/"))
+            response.raise_for_status()
+            check_for_redirect(response)
+        except requests.exceptions.TooManyRedirects:
+            print(f'TooManyRedirects. Page = {page}, ошибочное перенаправление.')
+            continue
+        except requests.exceptions.ConnectionError:
+            print(f'ConnectionError. Таймаут: {timeout}сек.')
+            time.sleep(timeout)
+            continue
+        except requests.exceptions.HTTPError:
+            print(f'HTTPError. Проверьте урлы: {response.url}.')
+            continue
+
         soup_result = BeautifulSoup(response.text, "html.parser")
 
         selector = "div#content table.d_book a"
