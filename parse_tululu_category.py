@@ -106,15 +106,13 @@ def main():
             except requests.exceptions.HTTPError:
                 print(f'HTTPError. Проверьте урлы: текст = {book["url"]}, картинка = {book["img"]}.')
 
-    # pprint(team_books)
     if json_path:
         filepath = Path(json_path, "books.json")
     else:
         filepath = Path(dest_folder, "books.json")
 
     with open(filepath, "w", encoding='utf8') as filejson:
-        books_json = json.dumps(team_books, ensure_ascii=False, indent=4, separators=(',', ':'))
-        filejson.write(books_json)
+        json.dump(team_books, filejson, ensure_ascii=False, indent=4, separators=(',', ':'))
 
 if __name__ == "__main__":
     main()
