@@ -1,4 +1,3 @@
-from pprint import pprint
 from pathlib import Path
 import requests
 from main import WrongUrl, check_for_redirect, parse_book_page, sanitize_filename, download_txt, download_image
