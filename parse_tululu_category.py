@@ -23,10 +23,10 @@ def create_parser():
     parser.add_argument('--dest_folder',  nargs='?', default='',
                         help='Path to the directory with parsing results: pictures, books, JSON. '
                              'Default current dirictory.')
-    parser.add_argument('--skip_imgs', nargs='?', default='No',
-                        help='Do not download pictures Yes/No. Default "No".')
-    parser.add_argument('--skip_txt', nargs='?', default='No',
-                        help='Do not download text Yes/No. Default "No".')
+    parser.add_argument('--skip_imgs', action='store_false',
+                        help='Used for not download pictures.')
+    parser.add_argument('--skip_txt', action='store_false',
+                        help='Used not download text.')
     parser.add_argument('--json_path', nargs='?', default='',
                         help='Path to the directory JSON file.'
                              'Default current dirictory.')
@@ -41,8 +41,8 @@ def main():
     dest_folder = command_line_arguments.dest_folder
     start_page = command_line_arguments.start_page
     end_page = command_line_arguments.end_page
-    skip_imgs = command_line_arguments.skip_imgs == 'No'
-    skip_txt = command_line_arguments.skip_txt == 'No'
+    skip_imgs = command_line_arguments.skip_imgs
+    skip_txt = command_line_arguments.skip_txt
     json_path = command_line_arguments.json_path
     load_dotenv()
 
