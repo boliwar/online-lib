@@ -160,6 +160,6 @@ cython_debug/
 .idea/
 /books
 /images
-*.json
+index.html
 books.json
 *.json
