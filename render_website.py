@@ -1,5 +1,4 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from http.server import HTTPServer, SimpleHTTPRequestHandler
 from parse_tululu_category import create_parser
 import json
 from pathlib import Path
@@ -35,8 +34,6 @@ def rebuild():
         with open(Path(pages_directory, f'index{i}.html'), 'w', encoding="utf8") as file:
             file.write(rendered_page)
 
-    print("Site rebuilt")
-
 
 def main():
     global books
@@ -61,9 +58,6 @@ def main():
         book['url'] = Path('../', books_directory, f'{sanitize_filename(book["title"])}.txt')
 
     rebuild()
-    # server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
-    # server.serve_forever()
-
     server = Server()
     server.watch('template.html', rebuild)
     server.serve(default_filename=r'./pages/index1.html')
