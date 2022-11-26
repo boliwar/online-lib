@@ -25,7 +25,7 @@ pip install -r requirements.txt
 ```
 Рекомендуется использовать [виртуальное окружение](https://docs.python.org/3/library/venv.html) для изоляции проекта. 
 
-## Дополнительный модуль
+## Модуль по категориям
 скачиваем книги с сайта  [https://tululu.org/](https://tululu.org/) по категориям
 ```
 python parse_tululu_category 
@@ -41,9 +41,20 @@ python parse_tululu_category
 
 ## Модуль создания web-сайта
 
+Модуль использует параметры и данные созданные на основе предыдущих модулей
+
+```
+BOOKS_DIRECTORY= _дириктория для текстов_
+IMAGES_DIRECTORY= _дириктория для картинок (обложек)_
+```
+--dest_folder  _Путь к каталогу с результатами парсинга: картинки, книги, JSON. Текущий каталог по умолчанию.<br>_
+
+### Запуск сайта 
+
 ```
 python  render_website.py
 ```
+сайт находится по адресу http://127.0.0.1:5500/
 
 [Пример выгружаемых страниц](https://boliwar.github.io/online-lib/pages/index.html)
 
