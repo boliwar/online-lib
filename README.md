@@ -47,3 +47,6 @@ python  render_website.py
 
 [Пример выгружаемых страниц](https://boliwar.github.io/online-lib/pages/index.html)
 
+![image](https://user-images.githubusercontent.com/5857967/204090280-d9307b7f-fe76-46c1-8da6-1494efa21250.png)
+
+
