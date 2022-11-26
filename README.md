@@ -39,4 +39,11 @@ python parse_tululu_category
 --skip_txt'    _Не загружать текст Да/Нет. По умолчанию "Нет".<br>_
 --json_path   _Путь к файлу JSON каталога. Текущий каталог по умолчанию.<br>_
 
+## Модуль создания web-сайта
+
+```
+python  render_website.py
+```
+
+[Пример выгружаемых страниц](https://boliwar.github.io/online-lib/static/index.html)
 
