@@ -163,3 +163,4 @@ cython_debug/
 index.html
 books.json
 *.json
+/pages

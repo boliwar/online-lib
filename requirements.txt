@@ -3,4 +3,5 @@ python-dotenv==0.21.0
 pathvalidate==2.5.2
 bs4==0.0.1
 jinja2==3.1.2
- livereload==2.6.3
+livereload==2.6.3
+more_itertools==9.0.0

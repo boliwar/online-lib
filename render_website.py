@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from urllib.parse import urljoin, urlparse
 from livereload import Server
 from pathvalidate import sanitize_filename
+from more_itertools import chunked
 
 books = []
 
@@ -20,9 +21,16 @@ def rebuild():
 
     template = env.get_template('template.html')
 
-    rendered_page = template.render(books=books,)
-    with open('index.html', 'w', encoding="utf8") as file:
-        file.write(rendered_page)
+    pages_directory = Path(os.getcwd(), 'pages')
+    pages_directory.mkdir(parents=True, exist_ok=True)
+
+    parts_by_page = list(chunked(books, 15))
+    for i, part_page in enumerate(parts_by_page, 1):
+        rendered_page = template.render(
+                                        books=part_page,
+                                       )
+        with open(Path(pages_directory, f'index{i}.html'), 'w', encoding="utf8") as file:
+            file.write(rendered_page)
 
     print("Site rebuilt")
 
@@ -46,11 +54,11 @@ def main():
     books = json.loads(books_json)
 
     for book in books:
-        book['img'] = Path(images_directory,os.path.basename(urlparse(book['img']).path))
-        book['url'] = Path(books_directory, f'{sanitize_filename(book["title"])}.txt')
+        book['img'] = Path('../', images_directory, os.path.basename(urlparse(book['img']).path))
+        book['url'] = Path('../', books_directory, f'{sanitize_filename(book["title"])}.txt')
 
     rebuild()
-
+    exit()
     # server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
     # server.serve_forever()
 
