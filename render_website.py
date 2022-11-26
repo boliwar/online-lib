@@ -25,9 +25,12 @@ def rebuild():
     pages_directory.mkdir(parents=True, exist_ok=True)
 
     parts_by_page = list(chunked(books, 15))
+    pages_count = (len(parts_by_page))
     for i, part_page in enumerate(parts_by_page, 1):
         rendered_page = template.render(
                                         books=part_page,
+                                        pages_count = pages_count,
+                                        current_page=i,
                                        )
         with open(Path(pages_directory, f'index{i}.html'), 'w', encoding="utf8") as file:
             file.write(rendered_page)
@@ -58,13 +61,12 @@ def main():
         book['url'] = Path('../', books_directory, f'{sanitize_filename(book["title"])}.txt')
 
     rebuild()
-    exit()
     # server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
     # server.serve_forever()
 
     server = Server()
     server.watch('template.html', rebuild)
-    server.serve()
+    server.serve(default_filename=r'./pages/index1.html')
 
 if __name__ == "__main__":
     main()
