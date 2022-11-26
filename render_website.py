@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 from urllib.parse import urljoin, urlparse
 from livereload import Server
+from pathvalidate import sanitize_filename
 
 books = []
 
@@ -46,8 +47,13 @@ def main():
 
     for book in books:
         book['img'] = Path(images_directory,os.path.basename(urlparse(book['img']).path))
+        book['url'] = Path(books_directory, f'{sanitize_filename(book["title"])}.txt')
 
     rebuild()
+
+    # server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
+    # server.serve_forever()
+
     server = Server()
     server.watch('template.html', rebuild)
     server.serve()
