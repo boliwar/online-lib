@@ -45,5 +45,5 @@ python parse_tululu_category
 python  render_website.py
 ```
 
-[Пример выгружаемых страниц](https://boliwar.github.io/online-lib/static/index.html)
+[Пример выгружаемых страниц](https://boliwar.github.io/online-lib/pages/index.html)
 
