@@ -23,7 +23,8 @@ def rebuild():
     pages_directory = Path(os.getcwd(), 'pages')
     pages_directory.mkdir(parents=True, exist_ok=True)
 
-    parts_by_page = list(chunked(books, 15))
+    onpage_count = 15
+    parts_by_page = list(chunked(books, onpage_count))
     pages_count = (len(parts_by_page))
     for i, part_page in enumerate(parts_by_page, 1):
         rendered_page = template.render(
