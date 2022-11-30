@@ -56,7 +56,7 @@ python  render_website.py
 ```
 сайт находится по адресу http://127.0.0.1:5500/
 
-[Пример выгружаемых страниц](https://boliwar.github.io/online-lib/pages/index.html)
+[Пример выгружаемых страниц](https://boliwar.github.io/online-lib/pages/index1.html)
 
 ![image](https://user-images.githubusercontent.com/5857967/204090280-d9307b7f-fe76-46c1-8da6-1494efa21250.png)
 
