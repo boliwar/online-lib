@@ -24,11 +24,11 @@ def rebuild(books):
     onpage_count = 15
     parts_by_page = list(chunked(books, onpage_count))
     pages_count = (len(parts_by_page))
-    for i, part_page in enumerate(parts_by_page, 1):
+    for current_page, part_page in enumerate(parts_by_page, 1):
         rendered_page = template.render(
                                         books=part_page,
                                         pages_count = pages_count,
-                                        current_page=i,
+                                        current_page=current_page,
                                        )
         with open(Path(pages_directory, f'index{i}.html'), 'w', encoding="utf8") as file:
             file.write(rendered_page)
