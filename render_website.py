@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, quote
 from livereload import Server
 from pathvalidate import sanitize_filename
 from more_itertools import chunked
@@ -30,7 +30,7 @@ def rebuild(books):
                                         pages_count = pages_count,
                                         current_page=current_page,
                                        )
-        with open(Path(pages_directory, f'index{i}.html'), 'w', encoding="utf8") as file:
+        with open(Path(pages_directory, f'index{current_page}.html'), 'w', encoding="utf8") as file:
             file.write(rendered_page)
 
 
@@ -42,8 +42,8 @@ def main():
 
     load_dotenv()
 
-    books_directory = Path(dest_folder, os.environ['BOOKS_DIRECTORY'])
-    images_directory = Path(dest_folder, os.environ['IMAGES_DIRECTORY'])
+    books_directory = Path('../',dest_folder, os.environ['BOOKS_DIRECTORY'])
+    images_directory = Path('../',dest_folder, os.environ['IMAGES_DIRECTORY'])
 
     filepath = Path(dest_folder, "books.json")
 
@@ -51,8 +51,8 @@ def main():
         books = json.load(filejson)
 
     for book in books:
-        book['img'] = Path('../', images_directory, os.path.basename(urlparse(book['img']).path))
-        book['url'] = Path('../', books_directory, f'{sanitize_filename(book["title"])}.txt')
+        book['img'] = str(Path( images_directory, os.path.basename(urlparse(book['img']).path))).replace(os.sep, '/')
+        book['url'] = str(Path( books_directory, f'{sanitize_filename(book["title"])}.txt')).replace(os.sep, '/')
 
     rebuild(books)
     server = Server()
