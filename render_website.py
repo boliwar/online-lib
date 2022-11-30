@@ -48,9 +48,7 @@ def main():
     filepath = Path(dest_folder, "books.json")
 
     with open(filepath, "r", encoding='utf8') as filejson:
-        books_json = filejson.read()
-
-    books = json.loads(books_json)
+        books = json.load(filejson)
 
     for book in books:
         book['img'] = Path('../', images_directory, os.path.basename(urlparse(book['img']).path))
