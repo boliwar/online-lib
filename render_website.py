@@ -9,10 +9,8 @@ from livereload import Server
 from pathvalidate import sanitize_filename
 from more_itertools import chunked
 
-books = []
 
-def rebuild():
-    global books
+def rebuild(books):
     env = Environment(
         loader=FileSystemLoader('.'),
         autoescape=select_autoescape(['html', 'xml'])
@@ -37,7 +35,7 @@ def rebuild():
 
 
 def main():
-    global books
+    books = []
     parser = create_parser()
     command_line_arguments = parser.parse_args()
     dest_folder = command_line_arguments.dest_folder
@@ -58,9 +56,9 @@ def main():
         book['img'] = Path('../', images_directory, os.path.basename(urlparse(book['img']).path))
         book['url'] = Path('../', books_directory, f'{sanitize_filename(book["title"])}.txt')
 
-    rebuild()
+    rebuild(books)
     server = Server()
-    server.watch('template.html', rebuild)
+    server.watch('template.html', rebuild(books))
     server.serve(default_filename=r'./pages/index1.html')
 
 if __name__ == "__main__":
