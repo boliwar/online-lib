@@ -41,7 +41,6 @@ def parse_book_page(response, book_id):
     div_class_texts_part = soup_result.body.findAll('div', attrs={'class': 'texts'})
     span_class_d_book_part = soup_result.body.findAll('span', attrs={'class': 'd_book'})
 
-
     return {'index': str(book_id),
             'url': url,
             'title': f"{book_id}. {title.strip()}",
