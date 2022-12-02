@@ -23,7 +23,7 @@ def rebuild(books):
 
     count_per_page = 15
     parts_by_page = list(chunked(books, count_per_page))
-    pages_count = (len(parts_by_page))
+    pages_count = len(parts_by_page)
     for current_page, part_page in enumerate(parts_by_page, 1):
         rendered_page = template.render(
                                         books=part_page,
